@@ -15,7 +15,7 @@ import os
 import argparse
 from common import SentimentClassifier, load_sentiment140, clean_text
 
-def retrain_with_pseudo_labels(new_texts: list[str], run_id: str, base_data_path="", code_path="common.py"):
+def retrain_with_pseudo_labels(new_texts: list[str], run_id: str, code_path: str, base_data_path="", ):
     # 1. Load your original labeled dataset
     df = load_sentiment140(base_data_path)
     df["clean_text"] = df["text"].apply(clean_text)
@@ -104,7 +104,7 @@ def get_latest_feed_posts(jwt, limit=10):
     else:
         raise Exception(f"Failed to fetch feed: {resp.status_code}\n{resp.text}")
     
-def main(handle, password, run_id, base_data_path="", code_path="common.py"):
+def main(handle, password, run_id, code_path: str, base_data_path=""):
     # 1. Login to Bluesky
     jwt = bluesky_login(handle, password)
 
@@ -112,7 +112,7 @@ def main(handle, password, run_id, base_data_path="", code_path="common.py"):
     new_texts = get_latest_feed_posts(jwt, limit=100)
 
     # 3. Retrain model with pseudo-labeling
-    retrain_with_pseudo_labels(new_texts, run_id, base_data_path, code_path="common.py")
+    retrain_with_pseudo_labels(new_texts, run_id, code_path=code_path, base_data_path=base_data_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Retrain sentiment classifier with new data from Bluesky.")
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     parser.add_argument("--password", type=str, required=True, help="Bluesky password")
     parser.add_argument("--run_id", type=str, required=True, help="MLflow run ID of the current model")
     parser.add_argument("--base_data_path", type=str, default="", help="Path to base dataset for initial training")
-    parser.add_argument("--code_path", type=str, default="common.py", help="Path to common code file")
+    parser.add_argument("--code_path", type=str, required=True, help="Path to common code file")
 
     args = parser.parse_args()
-    main(args.handle, args.password, args.run_id, args.base_data_path, args.code_path)
+    main(args.handle, args.password, args.run_id, args.code_path, args.base_data_path)
