@@ -7,6 +7,8 @@ import pickle
 from common import SentimentClassifier, load_sentiment140, clean_text
 import argparse
 import re
+from typing import List
+import pandas as pd
 
 class SentimentClassifier(mlflow.pyfunc.PythonModel):
     def load_context(self, context):

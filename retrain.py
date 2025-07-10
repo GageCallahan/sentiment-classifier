@@ -13,6 +13,7 @@ import json
 import requests
 import os
 import argparse
+from typing import List
 
 class SentimentClassifier(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
