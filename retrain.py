@@ -119,8 +119,8 @@ if __name__ == "__main__":
     parser.add_argument("--handle", type=str, required=True, help="Bluesky handle (e.g., @your_handle)")
     parser.add_argument("--password", type=str, required=True, help="Bluesky password")
     parser.add_argument("--run_id", type=str, required=True, help="MLflow run ID of the current model")
-    parser.add_argument("--base_data_path", type=str, default="", help="Path to base dataset for initial training")
     parser.add_argument("--code_path", type=str, required=True, help="Path to common code file")
+    parser.add_argument("--base_data_path", type=str, default="", help="Path to base dataset for initial training")
 
     args = parser.parse_args()
     main(args.handle, args.password, args.run_id, args.code_path, args.base_data_path)
