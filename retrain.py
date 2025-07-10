@@ -21,11 +21,11 @@ def retrain_with_pseudo_labels(new_texts: list[str], run_id: str, base_data_path
     df["clean_text"] = df["text"].apply(clean_text)
 
     # 2. Load current model & vectorizer from MLflow
-    vectorizer_path = mlflow.artifacts.download_artifacts(f"runs:/{run_id}/artifacts/model.pkl")
+    vectorizer_path = mlflow.artifacts.download_artifacts(f"runs:/{run_id}/artifacts/artifacts/model.pkl")
     with open(vectorizer_path, "rb") as f:
         print('loading model ...')
         model = pickle.load(f)
-    vectorizer_path = mlflow.artifacts.download_artifacts(f"runs:/{run_id}/artifacts/vectorizer.pkl")
+    vectorizer_path = mlflow.artifacts.download_artifacts(f"runs:/{run_id}/artifacts/artifacts/vectorizer.pkl")
     with open(vectorizer_path, "rb") as f:
         print('loading vectorizer ...')
         vectorizer = pickle.load(f)
@@ -77,8 +77,8 @@ def retrain_with_pseudo_labels(new_texts: list[str], run_id: str, base_data_path
             artifact_path="artifacts",
             python_model=SentimentClassifier(),
             artifacts=artifacts,
-            registered_model_name="Sentiment140"
-            code_path=["common.py"]
+            registered_model_name="Sentiment140",
+            code_path=["common.py"],
         )
 
 def bluesky_login(handle, password):
