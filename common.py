@@ -29,7 +29,6 @@ def load_sentiment140(path):
     df["label"] = df["polarity"].replace({0: 0, 4: 1})  # 0 = negative, 4 = positive
     return df[["text", "label"]]
 
-# ---------- Step 2: Clean Text ----------
 def clean_text(text):
     text = re.sub(r"http\S+", "", text)  # remove URLs
     text = re.sub(r"@\w+", "", text)     # remove @user

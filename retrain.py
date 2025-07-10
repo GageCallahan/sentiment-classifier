@@ -13,14 +13,45 @@ import json
 import requests
 import os
 import argparse
-from common import SentimentClassifier, load_sentiment140, clean_text
+
+class SentimentClassifier(mlflow.pyfunc.PythonModel):
+    def load_context(self, context):
+        with open(context.artifacts["vectorizer"], "rb") as f:
+            self.vectorizer = pickle.load(f)
+        with open(context.artifacts["model"], "rb") as f:
+            self.model = pickle.load(f)
+
+    def predict(self, context, model_input: List[str]) -> List[int]:
+        if isinstance(model_input, pd.Series):
+            texts = model_input.tolist()
+        elif isinstance(model_input, list):
+            texts = model_input
+        else:
+            raise ValueError("Input should be a list or pandas Series of strings.")
+        
+        transformed_texts = self.vectorizer.transform(texts)
+        return self.model.predict(transformed_texts)
+
+def load_sentiment140(path):
+    df = pd.read_csv(path, encoding='latin-1', header=None)
+    df.columns = ["polarity", "id", "date", "query", "user", "text"]
+    df = df[["polarity", "text"]]
+    df["label"] = df["polarity"].replace({0: 0, 4: 1})  # 0 = negative, 4 = positive
+    return df[["text", "label"]]
+
+def clean_text(text):
+    text = re.sub(r"http\S+", "", text)  # remove URLs
+    text = re.sub(r"@\w+", "", text)     # remove @user
+    text = re.sub(r"#\w+", "", text)     # remove hashtags
+    text = re.sub(r"[^a-zA-Z\s]", "", text)  # remove punctuation
+    return text.lower().strip()
 
 def retrain_with_pseudo_labels(new_texts: list[str], run_id: str, base_data_path=""):
-    # 1. Load your original labeled dataset
+    
     df = load_sentiment140(base_data_path)
     df["clean_text"] = df["text"].apply(clean_text)
 
-    # 2. Load current model & vectorizer from MLflow
+    
     vectorizer_path = mlflow.artifacts.download_artifacts(f"runs:/{run_id}/artifacts/model.pkl")
     with open(vectorizer_path, "rb") as f:
         print('loading model ...')
@@ -30,18 +61,18 @@ def retrain_with_pseudo_labels(new_texts: list[str], run_id: str, base_data_path
         print('loading vectorizer ...')
         vectorizer = pickle.load(f)
 
-    # 3. Clean new texts
+    
     pseudo_df = pd.DataFrame(new_texts, columns=["text"])
     pseudo_df["clean_text"] = pseudo_df["text"].apply(clean_text)
 
-    # 4. Pseudo-label new data
+    # Pseudo-label new data
     transformed = vectorizer.transform(pseudo_df["clean_text"])
     pseudo_df["label"] = model.predict(transformed)
 
-    # 5. Combine original + pseudo-labeled
+    # Combine original + pseudo-labeled
     combined_df = pd.concat([df[["clean_text", "label"]], pseudo_df[["clean_text", "label"]]])
 
-    # 6. Retrain a new model
+    # Retrain a new model
     X_train, X_test, y_train, y_test = train_test_split(
         combined_df["clean_text"], combined_df["label"], test_size=0.2
     )
